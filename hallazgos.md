@@ -55,9 +55,12 @@ AuthService.java
 
 
 
+**FASE 3**
+
 Respuestas postman
 
-Fase 1. 
+Prueba 1. 
+
 POST "http://localhost:8080/login?u=admin&p=12345"
 ¿Qué datos sensibles aparecen en la respuesta?
 
@@ -130,7 +133,7 @@ O
 }
 
 
-Fase 2.
+Prueba 2.
 
 POST "http://localhost:8080/login?u=admin'--&p=cualquiercosa"
 ¿Qué ocurrió? ¿Por qué es peligroso en producción?
@@ -147,7 +150,7 @@ Modificar o eliminar datos
 
 Por eso es un riesgo grave y se deben usar consultas parametrizadas y validación de entradas para evitar este tipo de ataques.
 
-Fase 3. 
+Prueba 3. 
 
 POST "http://localhost:8080/register?u=test&p=123&e=test@test.com"
 POST "http://localhost:8080/register?u=test&p=1234&e=test@test.com"
