@@ -57,8 +57,9 @@ AuthService.java
 
 Respuestas postman
 
+Fase 1. 
 POST "http://localhost:8080/login?u=admin&p=12345"
-¿Qué datos sensibles aparecen en la respuesta? ¿Debería retornarse eso?
+¿Qué datos sensibles aparecen en la respuesta?
 
 {
     "ok": true,
@@ -66,3 +67,132 @@ POST "http://localhost:8080/login?u=admin&p=12345"
     "hash": "827ccb0eea8a706c4c34a16891f84e7b"
 }
 
+El dato sensible que aparece es:
+
+ - "hash": "827ccb0eea8a706c4c34a16891f84e7b"
+
+Ese valor es el hash de la contraseña.
+De hecho, corresponde al hash MD5 de 12345.
+
+Aunque no se está devolviendo la contraseña en texto plano, el hash también es información sensible.
+
+¿Debería retornarse eso?
+
+No, no debería retornarse el hash de la contraseña.
+
+Razones:
+
+1. Exposición innecesaria de información
+
+- El cliente (frontend) no necesita el hash.
+
+- Solo necesita saber si la autenticación fue exitosa.
+
+2. Riesgo de seguridad
+
+- Si el hash es interceptado, puede:
+
+ - Ser usado en ataques de diccionario.
+
+ - Compararse en bases de datos de hashes conocidos.
+
+- En este caso es MD5, que es un algoritmo inseguro y obsoleto.
+
+3. Buenas prácticas de autenticación
+
+- El backend debe:
+
+ - Validar usuario y contraseña.
+
+ - Retornar un token (JWT) o mensaje de éxito.
+
+- Nunca devolver:
+
+ - Contraseñas
+
+ - Hashes
+
+- Datos internos de la base de datos
+
+¿Cómo debería ser la respuesta correcta?
+
+{
+    "ok": true,
+    "message": "Login exitoso",
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+
+O
+
+{
+    "ok": true,
+    "user": "admin"
+}
+
+
+Fase 2.
+
+POST "http://localhost:8080/login?u=admin'--&p=cualquiercosa"
+¿Qué ocurrió? ¿Por qué es peligroso en producción?
+
+Al enviar admin'-- en el parámetro del usuario, se realizó un intento de inyección SQL. El ' cierra la cadena original y -- convierte el resto de la consulta en comentario, lo que puede hacer que el sistema ignore la validación de la contraseña.
+
+En este caso no inició sesión (ok: false), pero sigue siendo peligroso porque en producción un atacante podría:
+
+Ingresar sin contraseña
+
+Robar información de la base de datos
+
+Modificar o eliminar datos
+
+Por eso es un riesgo grave y se deben usar consultas parametrizadas y validación de entradas para evitar este tipo de ataques.
+
+Fase 3. 
+
+POST "http://localhost:8080/register?u=test&p=123&e=test@test.com"
+POST "http://localhost:8080/register?u=test&p=1234&e=test@test.com"
+```
+¿Cuál fue rechazado?
+
+El que fue rechazado fue:
+
+POST http://localhost:8080/register?u=test&p=123&e=test@test.com
+
+Porque la respuesta muestra:
+
+{
+  "ok": false
+}
+
+El que fue aceptado fue:
+
+POST http://localhost:8080/register?u=test&p=1234&e=test@test.com
+
+Porque devuelve:
+
+{
+  "ok": true,
+  "user": "test"
+}
+
+¿Es esa una validación suficiente?
+
+No, no es suficiente.
+
+Solo está validando la longitud de la contraseña (por ejemplo, mínimo 4 caracteres), pero una contraseña como 1234 sigue siendo muy débil.
+
+Una validación adecuada debería incluir:
+
+- Mínimo 8 caracteres
+
+- Letras mayúsculas y minúsculas
+
+- Números
+
+- Caracteres especiales
+
+- Validación correcta del formato del email
+
+- No permitir datos por query params (mejor usar body)
+
+En conclusión, la validación actual es muy básica y no es segura para un entorno de producción.
